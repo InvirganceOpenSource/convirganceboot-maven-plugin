@@ -32,3 +32,8 @@ Make sure you are in the directory of your web application project, then run the
 ```
 mvn com.invirgance:convirganceboot-maven-plugin:boot
 ```
+
+# Output
+
+You will find the executable `.jar` file in the `target` directory of your project. It will have the same name as your `.war` file, but with the `.jar` extension. The original `.war` remains untouched and can be deployed as-is. 
+
