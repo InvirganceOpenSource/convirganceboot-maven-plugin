@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -50,6 +51,9 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.jetty.ee10.quickstart.PreconfigureQuickStartWar;
+import org.eclipse.jetty.util.resource.PathResourceFactory;
+import org.eclipse.jetty.util.resource.Resource;
 
 /**
  *
@@ -58,7 +62,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 @Mojo(name="boot", defaultPhase = LifecyclePhase.PACKAGE)
 public class ConvirganceBootMavenPlugin extends AbstractMojo
 {
-    private String convirganceBoot = "com.invirgance:convirgance-boot:0.1.0-SNAPSHOT";
+    private String convirganceBoot = "com.invirgance:convirgance-boot:0.2.0";
     private String mainClass = "com.invirgance.convirgance.boot.ConvirganceBoot";
     private List<String> files = new ArrayList<>();
     private List<String> libraries = new ArrayList<>();
@@ -182,6 +186,7 @@ public class ConvirganceBootMavenPlugin extends AbstractMojo
         {
             assembleJar(out);
             packageFile(out, war, "root.war");
+            packageFile(out, new File(war.toString().replace(".war", "/WEB-INF/quickstart-web.xml")), "quickstart-web.xml");
             packageLibrary(out, convirganceBoot);
             
             for(var artifact : artifacts)
@@ -332,6 +337,20 @@ public class ConvirganceBootMavenPlugin extends AbstractMojo
         
         return new MavenProject(model);
     }
+    
+    private void configureQuickstart(String directory) throws MojoExecutionException
+    {
+        Resource resource = new PathResourceFactory().newResource(Paths.get(directory));
+        
+        try
+        {
+            PreconfigureQuickStartWar.preconfigure(null, resource, null);
+        }
+        catch(Exception e)
+        {
+            throw new MojoExecutionException(e);
+        }
+    }
 
     public String getLatestVersion(String coordinates)
     {
@@ -375,6 +394,7 @@ public class ConvirganceBootMavenPlugin extends AbstractMojo
         
         getLog().info("Repackaging " + war + " into executaable " + jar);
 
+        configureQuickstart(build.getDirectory() + "/" + build.getFinalName());
         packageApplication(new File(war), new File(jar), artifacts);
     }
     
